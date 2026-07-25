@@ -435,38 +435,24 @@
     color:var(--muted);
     padding:16px 22px 4px;
   }
-  .rel-row{
+  .side-effects-grid{
     display:grid;
-    grid-template-columns:1fr 90px;
-    align-items:center;
-    gap:14px;
-    padding:10px 22px;
-    border-top:1px solid var(--hairline);
+    grid-template-columns:repeat(3, 1fr);
+    gap:10px;
+    padding:14px 22px 20px;
   }
-  .rel-name{ font-size:13.5px; }
-  .rel-bar-wrap{
-    display:flex;
-    align-items:center;
-    gap:8px;
-  }
-  .rel-bar-track{
-    flex:1;
-    height:6px;
+  .side-effect-pill{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13px;
+    color:var(--ink);
     background:var(--bg);
-    border-radius:3px;
-    overflow:hidden;
+    border:1px solid var(--hairline);
+    border-radius:7px;
+    padding:9px 12px;
+    text-align:center;
   }
-  .rel-bar-fill{
-    height:100%;
-    background:var(--ink);
-    border-radius:3px;
-  }
-  .rel-val{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:12px;
-    color:var(--muted);
-    width:40px;
-    text-align:right;
+  @media (max-width:520px){
+    .side-effects-grid{ grid-template-columns:repeat(2, 1fr); }
   }
 
   details{
@@ -719,7 +705,7 @@ async function runImagePanel() {
   try {
     const formData = new FormData();
     files.forEach(f => formData.append('images', f));
-    formData.append('top_k', '8');
+    formData.append('top_k', '3');
 
     const res = await fetch('/api/predict_from_images', { method: 'POST', body: formData });
     const data = await res.json();
@@ -833,7 +819,7 @@ async function runPanel() {
   btn.textContent = 'Running…';
 
   try {
-    const res = await fetch(`/api/predict_multi?drugs=${encodeURIComponent(drugs.join(','))}&top_k=8`);
+    const res = await fetch(`/api/predict_multi?drugs=${encodeURIComponent(drugs.join(','))}&top_k=3`);
     const data = await res.json();
     if (!res.ok) {
       showError(data.error || 'Something went wrong.');
@@ -925,20 +911,18 @@ function renderPairCard(pair) {
 
   const panelTitle = document.createElement('div');
   panelTitle.className = 'panel-title';
-  panelTitle.textContent = 'Most likely side effects';
+  panelTitle.textContent = 'Possible side effects (top 3)';
   body.appendChild(panelTitle);
 
-  pair.top_relations.forEach(r => {
-    const row = document.createElement('div');
-    row.className = 'rel-row';
-    row.innerHTML = `
-      <div class="rel-name">${r.name}</div>
-      <div class="rel-bar-wrap">
-        <div class="rel-bar-track"><div class="rel-bar-fill" style="width:${(r.probability*100).toFixed(0)}%"></div></div>
-        <div class="rel-val">${r.probability.toFixed(2)}</div>
-      </div>`;
-    body.appendChild(row);
+  const grid = document.createElement('div');
+  grid.className = 'side-effects-grid';
+  pair.top_relations.slice(0, 3).forEach(r => {
+    const pill = document.createElement('div');
+    pill.className = 'side-effect-pill';
+    pill.textContent = r.name;
+    grid.appendChild(pill);
   });
+  body.appendChild(grid);
 
   card.appendChild(header);
   card.appendChild(body);
