@@ -12,6 +12,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from inference.inference import DrugSafetyPredictor
 from tablet_classifier import TabletClassifier
+from llm_explainer import explain_interaction
 
 DATA_PATH = str(PROJECT_ROOT / "graph/heterodata_with_features.pt")
 CHECKPOINT_PATH = str(PROJECT_ROOT / "checkpoints/search_v3/final/best_model.pt")
@@ -287,6 +288,32 @@ def api_predict_multi():
         return jsonify({"error": f"Unknown drug CID(s): {', '.join(unknown)}"}), 400
 
     return jsonify(_score_multi(cids, top_k=top_k))
+
+
+@app.route("/api/explain", methods=["POST"])
+def api_explain():
+    """On-demand explanation for ONE pair's predicted side effects, in plain
+    language. Called lazily by the frontend the first time a pair card is
+    expanded -- not eagerly for every pair in /api/predict_multi -- so a
+    6-drug request (15 pairs) doesn't fire 15 LLM calls up front.
+
+    JSON body:
+        drug_a_name, drug_b_name -- display names for the pair
+        tier_label               -- e.g. "Elevated risk signal" (for context only)
+        top_relations            -- [{"name": ..., "probability": ...}, ...]
+    """
+    payload = request.get_json(silent=True) or {}
+    drug_a_name = payload.get("drug_a_name")
+    drug_b_name = payload.get("drug_b_name")
+    tier_label = payload.get("tier_label", "")
+    top_relations = payload.get("top_relations") or []
+
+    if not drug_a_name or not drug_b_name or not top_relations:
+        return jsonify({"error": "drug_a_name, drug_b_name, and top_relations are required."}), 400
+
+    relations = [(r.get("name", ""), float(r.get("probability", 0) or 0)) for r in top_relations]
+    explanation = explain_interaction(drug_a_name, drug_b_name, relations, tier_label)
+    return jsonify(explanation)
 
 
 def _classify_upload(file_storage, top_k: int = 3) -> Dict:

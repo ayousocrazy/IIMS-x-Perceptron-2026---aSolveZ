@@ -366,6 +366,37 @@
     margin:0;
   }
 
+  /* --- why this interaction matters --- */
+  .why-matters{
+    padding:16px 22px 6px;
+  }
+  .why-matters ul{
+    margin:8px 0 0;
+    padding-left:20px;
+  }
+  .why-matters li{
+    font-size:13.5px;
+    line-height:1.55;
+    margin-bottom:6px;
+  }
+  .why-loading{
+    font-size:12.5px;
+    color:var(--muted);
+    font-style:italic;
+  }
+  .why-note{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:8px;
+  }
+  .side-effect-pill .se-explain{
+    display:block;
+    font-size:11px;
+    color:var(--muted);
+    margin-top:4px;
+    font-weight:400;
+  }
+
   /* --- per-pair report cards --- */
   .pair-card{
     background:var(--surface);
@@ -879,10 +910,11 @@ function renderSummary(data) {
   return wrap;
 }
 
-function renderPairCard(pair) {
+function renderPairCard(pair, autoExpand) {
   const style = tierStyle[pair.tier.tier] || tierStyle.moderate;
   const card = document.createElement('div');
   card.className = 'pair-card';
+  card.dataset.explainLoaded = 'false';
 
   const header = document.createElement('div');
   header.className = 'pair-header';
@@ -891,7 +923,6 @@ function renderPairCard(pair) {
   header.innerHTML = `
     <span class="pair-names">${pair.drug_a_name} + ${pair.drug_b_name}</span>
     <span class="pair-tier-badge">${pair.tier.label} · mean ${pair.mean_prob.toFixed(3)}</span>`;
-  header.addEventListener('click', () => card.classList.toggle('expanded'));
 
   const body = document.createElement('div');
   body.className = 'pair-body';
@@ -909,6 +940,20 @@ function renderPairCard(pair) {
     </div>`;
   body.appendChild(metrics);
 
+  // "Why this interaction matters" -- fetched lazily from Groq the first
+  // time this card is expanded, not eagerly for every pair.
+  const whyWrap = document.createElement('div');
+  whyWrap.className = 'why-matters';
+  const whyTitle = document.createElement('div');
+  whyTitle.className = 'panel-title';
+  whyTitle.textContent = 'Why this interaction matters';
+  whyWrap.appendChild(whyTitle);
+  const whyContent = document.createElement('div');
+  whyContent.className = 'why-content';
+  whyContent.innerHTML = '<span class="why-loading">Not loaded yet — expand this card to load.</span>';
+  whyWrap.appendChild(whyContent);
+  body.appendChild(whyWrap);
+
   const panelTitle = document.createElement('div');
   panelTitle.className = 'panel-title';
   panelTitle.textContent = 'Possible side effects (top 3)';
@@ -919,13 +964,86 @@ function renderPairCard(pair) {
   pair.top_relations.slice(0, 3).forEach(r => {
     const pill = document.createElement('div');
     pill.className = 'side-effect-pill';
+    pill.dataset.rawName = r.name;
     pill.textContent = r.name;
     grid.appendChild(pill);
   });
   body.appendChild(grid);
 
+  async function loadExplanation() {
+    if (card.dataset.explainLoaded !== 'false') return;
+    card.dataset.explainLoaded = 'loading';
+    whyContent.innerHTML = '<span class="why-loading">Asking the AI to explain this in plain language…</span>';
+
+    try {
+      const res = await fetch('/api/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          drug_a_name: pair.drug_a_name,
+          drug_b_name: pair.drug_b_name,
+          tier_label: pair.tier.label,
+          top_relations: pair.top_relations.slice(0, 3),
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok || !data.why_it_matters) {
+        whyContent.innerHTML = '<span class="why-loading">Could not load an explanation right now.</span>';
+        card.dataset.explainLoaded = 'false';
+        return;
+      }
+
+      const ul = document.createElement('ul');
+      data.why_it_matters.forEach(point => {
+        const li = document.createElement('li');
+        li.textContent = point;
+        ul.appendChild(li);
+      });
+      whyContent.innerHTML = '';
+      whyContent.appendChild(ul);
+
+      if (data.note) {
+        const note = document.createElement('div');
+        note.className = 'why-note';
+        note.textContent = data.note;
+        whyContent.appendChild(note);
+      }
+
+      // Fill in plain-language explanations under each side-effect pill,
+      // matching by name against the same list sent in the request.
+      const byName = {};
+      (data.side_effects || []).forEach(se => { byName[se.name] = se.plain_explanation; });
+      grid.querySelectorAll('.side-effect-pill').forEach(pill => {
+        const explanation = byName[pill.dataset.rawName];
+        if (explanation) {
+          const small = document.createElement('span');
+          small.className = 'se-explain';
+          small.textContent = explanation;
+          pill.appendChild(small);
+        }
+      });
+
+      card.dataset.explainLoaded = 'true';
+    } catch (e) {
+      whyContent.innerHTML = '<span class="why-loading">Could not reach the server.</span>';
+      card.dataset.explainLoaded = 'false';
+    }
+  }
+
+  header.addEventListener('click', () => {
+    const nowExpanded = card.classList.toggle('expanded');
+    if (nowExpanded) loadExplanation();
+  });
+
   card.appendChild(header);
   card.appendChild(body);
+
+  if (autoExpand) {
+    card.classList.add('expanded');
+    loadExplanation();
+  }
+
   return card;
 }
 
@@ -935,8 +1053,7 @@ function renderResult(data) {
   result.appendChild(renderSummary(data));
 
   data.pairs.forEach((pair, i) => {
-    const card = renderPairCard(pair);
-    if (i === 0) card.classList.add('expanded'); // auto-expand the riskiest pair
+    const card = renderPairCard(pair, i === 0); // auto-expand + auto-load the riskiest pair
     result.appendChild(card);
   });
 
