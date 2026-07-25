@@ -9,7 +9,7 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 
 from models.hgnn import DrugSafetyHGNN
 from models.encoder import split_polypharmacy_edges
-from training.negative_sampling import corrupt_edges
+from DDL_model_construtor.training.negative_sampling import corrupt_edges
 
 torch.set_num_threads(os.cpu_count())
 
