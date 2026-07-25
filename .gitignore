@@ -9,3 +9,7 @@ graph/*.npy
 graph/*.pt
 
 __pycache__
+
+*.pth
+
+image_data

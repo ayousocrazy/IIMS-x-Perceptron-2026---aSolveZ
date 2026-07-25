@@ -36,7 +36,7 @@
   }
   .sheet{
     width:100%;
-    max-width:720px;
+    max-width:760px;
   }
   .eyebrow{
     font-family:'IBM Plex Mono', monospace;
@@ -59,7 +59,7 @@
     font-size:14.5px;
     margin:0 0 32px;
     line-height:1.5;
-    max-width:52ch;
+    max-width:56ch;
   }
   .card{
     background:var(--surface);
@@ -68,11 +68,149 @@
     padding:28px;
     margin-bottom:20px;
   }
-  .specimen-row{
+
+  /* --- mode toggle --- */
+  .mode-toggle{
     display:grid;
-    grid-template-columns:1fr auto 1fr;
-    gap:16px;
-    align-items:end;
+    grid-template-columns:1fr 1fr;
+    gap:6px;
+    background:var(--bg);
+    border:1px solid var(--hairline);
+    border-radius:9px;
+    padding:5px;
+    margin-bottom:22px;
+  }
+  .mode-toggle button{
+    border:none;
+    background:none;
+    padding:10px 12px;
+    border-radius:6px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    color:var(--muted);
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .mode-toggle button.active{
+    background:var(--surface);
+    color:var(--ink);
+    box-shadow:0 1px 2px rgba(18,24,31,.08);
+  }
+  .mode-toggle .badge{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px;
+    letter-spacing:.08em;
+    color:var(--accent);
+    display:block;
+    margin-top:2px;
+  }
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  /* --- dynamic photo rows --- */
+  #imageRows{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .image-row{
+    display:grid;
+    grid-template-columns:28px 1fr 32px;
+    align-items:center;
+    gap:12px;
+  }
+  .image-row .slot-index{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--muted);
+    text-align:center;
+  }
+  .file-field{
+    border:1px dashed var(--hairline);
+    border-radius:7px;
+    background:var(--bg);
+    padding:10px 12px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-height:20px;
+  }
+  .file-field input[type="file"]{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:12.5px;
+    color:var(--muted);
+    max-width:100%;
+  }
+  .file-field .file-name{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color:var(--ink);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  /* --- classification results (photo mode) --- */
+  .classify-card{
+    background:var(--surface);
+    border:1px solid var(--hairline);
+    border-radius:var(--radius);
+    padding:20px 22px;
+    margin-bottom:20px;
+  }
+  .classify-title{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:16px;
+    margin:0 0 12px;
+  }
+  .classify-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:9px 0;
+    border-top:1px solid var(--hairline);
+    gap:12px;
+  }
+  .classify-row:first-of-type{ border-top:none; }
+  .classify-row .cf-file{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--muted);
+    flex:1;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .classify-row .cf-drug{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    font-size:14px;
+  }
+  .classify-row .cf-conf{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    color:var(--muted);
+  }
+
+  /* --- dynamic drug rows --- */
+  #drugRows{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .drug-row{
+    display:grid;
+    grid-template-columns:28px 1fr 32px;
+    align-items:center;
+    gap:12px;
+  }
+  .drug-row .slot-index{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--muted);
+    text-align:center;
   }
   .field label{
     display:block;
@@ -99,13 +237,44 @@
     outline:2px solid var(--accent);
     outline-offset:1px;
   }
-  .plus{
-    font-family:'Space Grotesk', sans-serif;
-    font-size:20px;
+  .remove-row{
+    width:32px;
+    height:32px;
+    border-radius:7px;
+    border:1px solid var(--hairline);
+    background:var(--bg);
     color:var(--muted);
-    padding-bottom:11px;
-    font-weight:600;
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
   }
+  .remove-row:hover{ background:var(--elevated-soft); color:var(--elevated); border-color:var(--elevated-soft); }
+  .remove-row:disabled{ opacity:.35; cursor:default; }
+
+  .add-row{
+    margin-top:14px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:none;
+    border:1px dashed var(--hairline);
+    color:var(--accent);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:13px;
+    padding:9px 14px;
+    border-radius:7px;
+    cursor:pointer;
+  }
+  .add-row:hover{ background:var(--accent-soft); }
+  .add-row:disabled{ opacity:.35; cursor:default; }
+
+  .row-hint{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:10px;
+  }
+
   button.run{
     margin-top:20px;
     width:100%;
@@ -130,44 +299,117 @@
   }
 
   #result{ display:none; }
-  .report{
+
+  /* --- summary card --- */
+  .summary{
+    background:var(--surface);
+    border:1px solid var(--hairline);
+    border-radius:var(--radius);
+    padding:24px 26px;
+    margin-bottom:20px;
+  }
+  .summary-title{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:18px;
+    margin:0 0 14px;
+  }
+  .summary-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1px;
+    background:var(--hairline);
+    border:1px solid var(--hairline);
+    border-radius:8px;
+    overflow:hidden;
+    margin-bottom:16px;
+  }
+  .summary-cell{
+    background:var(--surface);
+    padding:14px 16px;
+  }
+  .summary-cell .k{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .summary-cell .v{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:20px;
+    font-weight:600;
+  }
+  .summary-cell.tier-elevated .v{ color:var(--elevated); }
+  .summary-cell.tier-moderate .v{ color:var(--moderate); }
+  .summary-cell.tier-low .v{ color:var(--low); }
+
+  .riskiest-callout{
+    display:flex;
+    gap:14px;
+    padding:16px 18px;
+    border-radius:8px;
+    border-left:5px solid var(--tier-color, var(--muted));
+    background:var(--tier-soft, var(--bg));
+  }
+  .riskiest-callout .rc-label{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    margin:0 0 3px;
+    color:var(--tier-color, var(--ink));
+  }
+  .riskiest-callout .rc-detail{
+    font-size:13px;
+    color:var(--muted);
+    margin:0;
+  }
+
+  /* --- per-pair report cards --- */
+  .pair-card{
     background:var(--surface);
     border:1px solid var(--hairline);
     border-radius:var(--radius);
     overflow:hidden;
+    margin-bottom:14px;
     animation:rise .25s ease;
   }
   @keyframes rise{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
 
-  .flag{
+  .pair-header{
     display:flex;
-    gap:14px;
-    padding:22px 26px;
-    border-left:5px solid var(--tier-color, var(--muted));
+    justify-content:space-between;
+    align-items:center;
+    padding:16px 22px;
+    cursor:pointer;
     background:var(--tier-soft, var(--bg));
+    border-left:5px solid var(--tier-color, var(--muted));
   }
-  .flag-label{
+  .pair-names{
     font-family:'Space Grotesk', sans-serif;
     font-weight:700;
-    font-size:18px;
-    margin:0 0 4px;
+    font-size:15.5px;
+  }
+  .pair-tier-badge{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    font-weight:600;
     color:var(--tier-color, var(--ink));
+    white-space:nowrap;
+    margin-left:12px;
   }
-  .flag-detail{
-    font-size:13.5px;
-    color:var(--muted);
-    margin:0;
-    line-height:1.5;
-  }
+  .pair-body{ display:none; }
+  .pair-card.expanded .pair-body{ display:block; }
+  .pair-card.expanded .pair-header{ border-bottom:1px solid var(--hairline); }
 
   .metrics{
     display:grid;
-    grid-template-columns:repeat(3,1fr);
-    border-top:1px solid var(--hairline);
+    grid-template-columns:repeat(2,1fr);
     border-bottom:1px solid var(--hairline);
   }
   .metric{
-    padding:16px 20px;
+    padding:14px 20px;
     border-right:1px solid var(--hairline);
   }
   .metric:last-child{ border-right:none; }
@@ -181,7 +423,7 @@
   }
   .metric .v{
     font-family:'IBM Plex Mono', monospace;
-    font-size:22px;
+    font-size:20px;
     font-weight:600;
   }
 
@@ -191,17 +433,17 @@
     letter-spacing:.1em;
     text-transform:uppercase;
     color:var(--muted);
-    padding:20px 26px 4px;
+    padding:16px 22px 4px;
   }
   .rel-row{
     display:grid;
     grid-template-columns:1fr 90px;
     align-items:center;
     gap:14px;
-    padding:11px 26px;
+    padding:10px 22px;
     border-top:1px solid var(--hairline);
   }
-  .rel-name{ font-size:14px; }
+  .rel-name{ font-size:13.5px; }
   .rel-bar-wrap{
     display:flex;
     align-items:center;
@@ -221,7 +463,7 @@
   }
   .rel-val{
     font-family:'IBM Plex Mono', monospace;
-    font-size:12.5px;
+    font-size:12px;
     color:var(--muted);
     width:40px;
     text-align:right;
@@ -264,70 +506,69 @@
   <h1>Interaction Risk Checker</h1>
   <p class="sub">
     Heterogeneous graph neural network trained on polypharmacy side-effect data.
-    Hackathon prototype — test AUROC {{ test_auroc }}. Not for clinical use.
+    Add up to {{ max_drugs }} drugs to see every pairwise interaction, plus an overall
+    summary. Hackathon prototype — test AUROC {{ test_auroc }}.
   </p>
 
   <div class="card">
-    <div class="specimen-row">
-      <div class="field">
-        <label for="drugA">Specimen A</label>
-        <select id="drugA"></select>
-      </div>
-      <div class="plus">+</div>
-      <div class="field">
-        <label for="drugB">Specimen B</label>
-        <select id="drugB"></select>
-      </div>
-    </div>
-    <button class="run" id="runBtn">Run interaction panel</button>
-    <div class="error" id="errorBox"></div>
-  </div>
-
-  <div id="result">
-    <div class="report">
-      <div class="flag" id="flag">
-        <div>
-          <p class="flag-label" id="flagLabel">—</p>
-          <p class="flag-detail" id="flagDetail">—</p>
-        </div>
-      </div>
-      <div class="metrics">
-        <div class="metric">
-          <div class="k">Max probability</div>
-          <div class="v" id="maxProb">—</div>
-        </div>
-        <div class="metric">
-          <div class="k">Mean probability</div>
-          <div class="v" id="meanProb">—</div>
-        </div>
-        <div class="metric">
-          <div class="k">Model test AUROC</div>
-          <div class="v">{{ test_auroc }}</div>
-        </div>
-      </div>
-      <div class="panel-title">Most likely side effects</div>
-      <div id="relations"></div>
+    <div class="mode-toggle" role="tablist">
+      <button type="button" id="modeImageBtn" class="active" role="tab" aria-selected="true">
+        Upload photos
+        <span class="badge">RECOMMENDED</span>
+      </button>
+      <button type="button" id="modeNameBtn" role="tab" aria-selected="false">
+        Enter drug names
+      </button>
     </div>
 
-    <details>
-      <summary>How should I read this?</summary>
-      <p>
-        This model does not give a confident single diagnosis. Validation on held-out known
-        interactions showed known, documented interaction triples average
-        <code>{{ baseline_known }}</code> probability, while random, non-interacting pairs average
-        <code>{{ baseline_random }}</code>. The badge above compares this pair's score against those
-        two measured baselines, rather than an arbitrary cutoff. The ranked side effects are
-        <strong>possible concerns</strong>, not a certain outcome — the model's top-ranked guess does
-        not always match the documented side effect, even when it correctly flags a pair as
-        elevated-risk overall.
-      </p>
-    </details>
+    <!-- Photo mode (primary) -->
+    <div class="panel active" id="imagePanel">
+      <div id="imageRows"></div>
+      <button class="add-row" id="addImageRowBtn" type="button">+ Add photo</button>
+      <div class="row-hint" id="imageRowHint"></div>
+      <button class="run" id="runImageBtn">Identify &amp; check interactions</button>
+      <div class="error" id="imageErrorBox"></div>
+    </div>
+
+    <!-- Drug-name mode -->
+    <div class="panel" id="drugPanel">
+      <div id="drugRows"></div>
+      <button class="add-row" id="addRowBtn" type="button">+ Add drug</button>
+      <div class="row-hint" id="rowHint"></div>
+      <button class="run" id="runBtn">Run interaction panel</button>
+      <div class="error" id="errorBox"></div>
+    </div>
   </div>
+
+  <div id="classifyResult"></div>
+  <div id="result"></div>
+
+  <details>
+    <summary>How should I read this?</summary>
+    <p>
+      This model does not give a confident single diagnosis. Validation on held-out known
+      interactions showed known, documented interaction triples average
+      <code>{{ baseline_known }}</code> probability, while random, non-interacting pairs average
+      <code>{{ baseline_random }}</code>. Each pair's badge compares its <strong>mean probability
+      across all 1301 relations</strong> against those two baselines, rather than an arbitrary
+      cutoff — severity reflects the overall interaction profile, not just whichever single
+      relation happened to score highest. The ranked side effects are
+      <strong>possible concerns</strong>, not a certain outcome — the model's top-ranked guess does
+      not always match the documented side effect, even when it correctly flags a pair as
+      elevated-risk overall. With more than two drugs, every pair is scored independently — the
+      model does not model three-way or higher-order interactions.
+    </p>
+  </details>
 
   <footer>DrugSafetyHGNN · heterogeneous GAT encoder · 1301 relation types · CPU inference</footer>
 </div>
 
 <script>
+const MAX_DRUGS = {{ max_drugs }};
+const MIN_DRUGS = 2;
+let drugOptions = [];
+let rowCount = 0;
+
 const tierStyle = {
   elevated: { color: 'var(--elevated)', soft: 'var(--elevated-soft)' },
   moderate: { color: 'var(--moderate)', soft: 'var(--moderate-soft)' },
@@ -336,35 +577,263 @@ const tierStyle = {
 
 async function loadDrugs() {
   const res = await fetch('/api/drugs');
-  const drugs = await res.json();
-  const selects = [document.getElementById('drugA'), document.getElementById('drugB')];
-  selects.forEach((sel, i) => {
-    drugs.forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d.cid;
-      opt.textContent = d.name; 
-      sel.appendChild(opt);
-    });
-    sel.selectedIndex = Math.min(i, drugs.length - 1);
+  drugOptions = await res.json();
+  addRow();
+  addRow();
+  updateRowControls();
+}
+
+/* ---------------- mode toggle ---------------- */
+function setMode(mode) {
+  const isImage = mode === 'image';
+  document.getElementById('modeImageBtn').classList.toggle('active', isImage);
+  document.getElementById('modeImageBtn').setAttribute('aria-selected', isImage);
+  document.getElementById('modeNameBtn').classList.toggle('active', !isImage);
+  document.getElementById('modeNameBtn').setAttribute('aria-selected', !isImage);
+  document.getElementById('imagePanel').classList.toggle('active', isImage);
+  document.getElementById('drugPanel').classList.toggle('active', !isImage);
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('classifyResult').innerHTML = '';
+  showError('', 'errorBox');
+  showError('', 'imageErrorBox');
+}
+document.getElementById('modeImageBtn').addEventListener('click', () => setMode('image'));
+document.getElementById('modeNameBtn').addEventListener('click', () => setMode('name'));
+
+/* ---------------- photo rows ---------------- */
+const MIN_IMAGES = 2;
+let imageRowCount = 0;
+
+function addImageRow() {
+  if (imageRowCount >= MAX_DRUGS) return;
+  imageRowCount++;
+  const rows = document.getElementById('imageRows');
+  const row = document.createElement('div');
+  row.className = 'image-row';
+
+  const idx = document.createElement('div');
+  idx.className = 'slot-index';
+  idx.textContent = imageRowCount;
+
+  const field = document.createElement('div');
+  field.className = 'file-field';
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  const nameSpan = document.createElement('span');
+  nameSpan.className = 'file-name';
+  input.addEventListener('change', () => {
+    nameSpan.textContent = input.files.length ? input.files[0].name : '';
+  });
+  field.appendChild(input);
+  field.appendChild(nameSpan);
+
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
+  removeBtn.className = 'remove-row';
+  removeBtn.textContent = '×';
+  removeBtn.addEventListener('click', () => {
+    row.remove();
+    imageRowCount--;
+    renumberImageRows();
+    updateImageRowControls();
+  });
+
+  row.appendChild(idx);
+  row.appendChild(field);
+  row.appendChild(removeBtn);
+  rows.appendChild(row);
+  updateImageRowControls();
+}
+
+function renumberImageRows() {
+  document.querySelectorAll('#imageRows .slot-index').forEach((el, i) => {
+    el.textContent = i + 1;
   });
 }
 
-function showError(msg) {
-  const box = document.getElementById('errorBox');
+function updateImageRowControls() {
+  document.getElementById('addImageRowBtn').disabled = imageRowCount >= MAX_DRUGS;
+  document.querySelectorAll('#imageRows .remove-row').forEach(btn => {
+    btn.disabled = imageRowCount <= MIN_IMAGES;
+  });
+  const hint = document.getElementById('imageRowHint');
+  const pairs = imageRowCount * (imageRowCount - 1) / 2;
+  hint.textContent = `${imageRowCount} photo${imageRowCount === 1 ? '' : 's'} -> ${pairs} pairwise combination${pairs === 1 ? '' : 's'} will be scored (max ${MAX_DRUGS} photos).`;
+}
+
+function getSelectedFiles() {
+  const files = [];
+  document.querySelectorAll('#imageRows input[type="file"]').forEach(input => {
+    if (input.files && input.files[0]) files.push(input.files[0]);
+  });
+  return files;
+}
+
+function renderClassifications(classifications) {
+  const wrap = document.createElement('div');
+  wrap.className = 'classify-card';
+
+  const title = document.createElement('p');
+  title.className = 'classify-title';
+  title.textContent = 'What we identified';
+  wrap.appendChild(title);
+
+  classifications.forEach(c => {
+    const row = document.createElement('div');
+    row.className = 'classify-row';
+    if (c.error) {
+      row.innerHTML = `<span class="cf-file">${c.filename}</span><span class="cf-conf">${c.error}</span>`;
+    } else if (!c.resolved_cid) {
+      row.innerHTML = `<span class="cf-file">${c.filename}</span>
+        <span class="cf-drug">${c.predicted_class || 'Unrecognized'}</span>
+        <span class="cf-conf">not in graph</span>`;
+    } else {
+      row.innerHTML = `<span class="cf-file">${c.filename}</span>
+        <span class="cf-drug">${c.resolved_name}</span>
+        <span class="cf-conf">${(c.confidence * 100).toFixed(0)}% confident (as "${c.predicted_class}")</span>`;
+    }
+    wrap.appendChild(row);
+  });
+
+  const target = document.getElementById('classifyResult');
+  target.innerHTML = '';
+  target.appendChild(wrap);
+}
+
+async function runImagePanel() {
+  showError('', 'imageErrorBox');
+  document.getElementById('classifyResult').innerHTML = '';
+  document.getElementById('result').style.display = 'none';
+
+  const files = getSelectedFiles();
+  if (files.length < MIN_IMAGES) {
+    showError(`Please choose at least ${MIN_IMAGES} photos.`, 'imageErrorBox');
+    return;
+  }
+
+  const btn = document.getElementById('runImageBtn');
+  btn.disabled = true;
+  btn.textContent = 'Identifying…';
+
+  try {
+    const formData = new FormData();
+    files.forEach(f => formData.append('images', f));
+    formData.append('top_k', '8');
+
+    const res = await fetch('/api/predict_from_images', { method: 'POST', body: formData });
+    const data = await res.json();
+
+    if (!res.ok) {
+      if (data.classifications) renderClassifications(data.classifications);
+      showError(data.error || 'Something went wrong.', 'imageErrorBox');
+      return;
+    }
+
+    renderClassifications(data.classifications);
+    renderResult(data);
+  } catch (e) {
+    showError('Could not reach the server.', 'imageErrorBox');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Identify & check interactions';
+  }
+}
+
+document.getElementById('addImageRowBtn').addEventListener('click', addImageRow);
+document.getElementById('runImageBtn').addEventListener('click', runImagePanel);
+addImageRow();
+addImageRow();
+
+function buildSelect(select) {
+  select.innerHTML = '';
+  drugOptions.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d.cid;
+    opt.textContent = d.name;
+    select.appendChild(opt);
+  });
+}
+
+function addRow() {
+  if (rowCount >= MAX_DRUGS) return;
+  rowCount++;
+  const rows = document.getElementById('drugRows');
+  const row = document.createElement('div');
+  row.className = 'drug-row';
+
+  const idx = document.createElement('div');
+  idx.className = 'slot-index';
+  idx.textContent = rowCount;
+
+  const field = document.createElement('div');
+  field.className = 'field';
+  const select = document.createElement('select');
+  buildSelect(select);
+  // stagger default selection so freshly-added rows don't collide
+  select.selectedIndex = Math.min(rows.children.length, drugOptions.length - 1);
+  field.appendChild(select);
+
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
+  removeBtn.className = 'remove-row';
+  removeBtn.textContent = '×';
+  removeBtn.addEventListener('click', () => {
+    row.remove();
+    rowCount--;
+    renumberRows();
+    updateRowControls();
+  });
+
+  row.appendChild(idx);
+  row.appendChild(field);
+  row.appendChild(removeBtn);
+  rows.appendChild(row);
+  updateRowControls();
+}
+
+function renumberRows() {
+  document.querySelectorAll('#drugRows .slot-index').forEach((el, i) => {
+    el.textContent = i + 1;
+  });
+}
+
+function updateRowControls() {
+  document.getElementById('addRowBtn').disabled = rowCount >= MAX_DRUGS;
+  document.querySelectorAll('.remove-row').forEach(btn => {
+    btn.disabled = rowCount <= MIN_DRUGS;
+  });
+  const hint = document.getElementById('rowHint');
+  const pairs = rowCount * (rowCount - 1) / 2;
+  hint.textContent = `${rowCount} drug${rowCount === 1 ? '' : 's'} selected -> ${pairs} pairwise combination${pairs === 1 ? '' : 's'} will be scored (max ${MAX_DRUGS} drugs).`;
+}
+
+function showError(msg, boxId = 'errorBox') {
+  const box = document.getElementById(boxId);
   box.textContent = msg;
   box.style.display = msg ? 'block' : 'none';
 }
 
+function getSelectedDrugs() {
+  return Array.from(document.querySelectorAll('#drugRows select')).map(s => s.value);
+}
+
 async function runPanel() {
   showError('');
-  const drugA = document.getElementById('drugA').value;
-  const drugB = document.getElementById('drugB').value;
+  document.getElementById('classifyResult').innerHTML = '';
+  const drugs = getSelectedDrugs();
+
+  if (new Set(drugs).size !== drugs.length) {
+    showError('Please select each drug only once.');
+    return;
+  }
+
   const btn = document.getElementById('runBtn');
   btn.disabled = true;
   btn.textContent = 'Running…';
 
   try {
-    const res = await fetch(`/api/predict?drug_a=${encodeURIComponent(drugA)}&drug_b=${encodeURIComponent(drugB)}&top_k=8`);
+    const res = await fetch(`/api/predict_multi?drugs=${encodeURIComponent(drugs.join(','))}&top_k=8`);
     const data = await res.json();
     if (!res.ok) {
       showError(data.error || 'Something went wrong.');
@@ -380,19 +849,86 @@ async function runPanel() {
   }
 }
 
-function renderResult(data) {
-  const flag = document.getElementById('flag');
-  const style = tierStyle[data.tier.tier] || tierStyle.moderate;
-  flag.style.setProperty('--tier-color', style.color);
-  flag.style.setProperty('--tier-soft', style.soft);
-  document.getElementById('flagLabel').textContent = data.tier.label;
-  document.getElementById('flagDetail').textContent = data.tier.detail;
-  document.getElementById('maxProb').textContent = data.max_prob.toFixed(3);
-  document.getElementById('meanProb').textContent = data.mean_prob.toFixed(3);
+function renderSummary(data) {
+  const s = data.summary;
+  const wrap = document.createElement('div');
+  wrap.className = 'summary';
 
-  const relDiv = document.getElementById('relations');
-  relDiv.innerHTML = '';
-  data.top_relations.forEach(r => {
+  const title = document.createElement('p');
+  title.className = 'summary-title';
+  title.textContent = `Summary — ${s.num_drugs} drugs, ${s.num_pairs} pairs scored`;
+  wrap.appendChild(title);
+
+  const grid = document.createElement('div');
+  grid.className = 'summary-grid';
+  grid.innerHTML = `
+    <div class="summary-cell tier-elevated">
+      <div class="k">Elevated pairs</div>
+      <div class="v">${s.tier_counts.elevated}</div>
+    </div>
+    <div class="summary-cell tier-moderate">
+      <div class="k">Moderate pairs</div>
+      <div class="v">${s.tier_counts.moderate}</div>
+    </div>
+    <div class="summary-cell tier-low">
+      <div class="k">Low pairs</div>
+      <div class="v">${s.tier_counts.low}</div>
+    </div>`;
+  wrap.appendChild(grid);
+
+  if (s.riskiest_pair) {
+    const style = tierStyle[s.riskiest_pair.tier.tier] || tierStyle.moderate;
+    const callout = document.createElement('div');
+    callout.className = 'riskiest-callout';
+    callout.style.setProperty('--tier-color', style.color);
+    callout.style.setProperty('--tier-soft', style.soft);
+    callout.innerHTML = `
+      <div>
+        <p class="rc-label">Riskiest pair: ${s.riskiest_pair.drug_a_name} + ${s.riskiest_pair.drug_b_name}</p>
+        <p class="rc-detail">${s.riskiest_pair.tier.label} — mean probability ${s.riskiest_pair.mean_prob.toFixed(3)} across all relations (max relation: ${s.riskiest_pair.max_prob.toFixed(3)}; average mean across all pairs: ${s.overall_mean_of_mean.toFixed(3)})</p>
+      </div>`;
+    wrap.appendChild(callout);
+  }
+
+  return wrap;
+}
+
+function renderPairCard(pair) {
+  const style = tierStyle[pair.tier.tier] || tierStyle.moderate;
+  const card = document.createElement('div');
+  card.className = 'pair-card';
+
+  const header = document.createElement('div');
+  header.className = 'pair-header';
+  header.style.setProperty('--tier-color', style.color);
+  header.style.setProperty('--tier-soft', style.soft);
+  header.innerHTML = `
+    <span class="pair-names">${pair.drug_a_name} + ${pair.drug_b_name}</span>
+    <span class="pair-tier-badge">${pair.tier.label} · mean ${pair.mean_prob.toFixed(3)}</span>`;
+  header.addEventListener('click', () => card.classList.toggle('expanded'));
+
+  const body = document.createElement('div');
+  body.className = 'pair-body';
+
+  const metrics = document.createElement('div');
+  metrics.className = 'metrics';
+  metrics.innerHTML = `
+    <div class="metric">
+      <div class="k">Mean probability (drives severity)</div>
+      <div class="v">${pair.mean_prob.toFixed(3)}</div>
+    </div>
+    <div class="metric">
+      <div class="k">Max probability (top relation)</div>
+      <div class="v">${pair.max_prob.toFixed(3)}</div>
+    </div>`;
+  body.appendChild(metrics);
+
+  const panelTitle = document.createElement('div');
+  panelTitle.className = 'panel-title';
+  panelTitle.textContent = 'Most likely side effects';
+  body.appendChild(panelTitle);
+
+  pair.top_relations.forEach(r => {
     const row = document.createElement('div');
     row.className = 'rel-row';
     row.innerHTML = `
@@ -401,12 +937,29 @@ function renderResult(data) {
         <div class="rel-bar-track"><div class="rel-bar-fill" style="width:${(r.probability*100).toFixed(0)}%"></div></div>
         <div class="rel-val">${r.probability.toFixed(2)}</div>
       </div>`;
-    relDiv.appendChild(row);
+    body.appendChild(row);
   });
 
-  document.getElementById('result').style.display = 'block';
+  card.appendChild(header);
+  card.appendChild(body);
+  return card;
 }
 
+function renderResult(data) {
+  const result = document.getElementById('result');
+  result.innerHTML = '';
+  result.appendChild(renderSummary(data));
+
+  data.pairs.forEach((pair, i) => {
+    const card = renderPairCard(pair);
+    if (i === 0) card.classList.add('expanded'); // auto-expand the riskiest pair
+    result.appendChild(card);
+  });
+
+  result.style.display = 'block';
+}
+
+document.getElementById('addRowBtn').addEventListener('click', addRow);
 document.getElementById('runBtn').addEventListener('click', runPanel);
 loadDrugs();
 </script>

@@ -1,5 +1,6 @@
 import argparse
 import json
+from itertools import combinations
 from pathlib import Path
 
 import torch
@@ -156,6 +157,31 @@ class DrugSafetyPredictor:
             "top_relations": top_relations,
         }
 
+    @torch.no_grad()
+    def predict_multi(self, drugs, top_k=5, relation_names=None):
+        """Score every unordered pairwise combination among a list of drugs.
+
+        `drugs` can be a mix of node indices and/or CID strings (anything
+        resolve_index accepts). Internally this is just predict_pair_risk
+        called once per pair (A-B, A-C, B-C, ...), so cost scales as
+        O(n_drugs^2) full-relation passes -- fine for small n (a handful of
+        drugs), but be mindful before wiring this to large drug lists.
+
+        Returns a list of dicts, one per pair, each shaped like
+        predict_pair_risk's output plus the two identifiers being compared:
+            {"drug_a": ..., "drug_b": ..., "max_prob": ..., "mean_prob": ...,
+             "top_relations": [...]}
+        """
+        results = []
+        for drug_a, drug_b in combinations(drugs, 2):
+            risk = self.predict_pair_risk(drug_a, drug_b, top_k=top_k, relation_names=relation_names)
+            results.append({
+                "drug_a": drug_a,
+                "drug_b": drug_b,
+                **risk,
+            })
+        return results
+
 
 def main():
     parser = argparse.ArgumentParser(description="Score drug pair(s) for interaction risk")
@@ -171,11 +197,14 @@ def main():
                          help="path to data/processed/polypharmacy_relation_lookup.csv -- "
                               "if provided, risk summaries show side-effect names instead of "
                               "raw relation indices")
-    parser.add_argument("--drug-a", required=True, help="PubChem CID (e.g. CID4168) or raw node index")
-    parser.add_argument("--drug-b", required=True, help="PubChem CID (e.g. CID4168) or raw node index")
+    parser.add_argument("--drug-a", help="PubChem CID (e.g. CID4168) or raw node index")
+    parser.add_argument("--drug-b", help="PubChem CID (e.g. CID4168) or raw node index")
+    parser.add_argument("--drugs", default=None,
+                         help="comma-separated list of 2+ CIDs/indices -- if given, scores every "
+                              "pairwise combination instead of a single --drug-a/--drug-b pair")
     parser.add_argument("--edge-type", type=int, default=None,
                          help="score ONE specific relation index instead of the full risk "
-                              "summary across all 1301 relations")
+                              "summary across all 1301 relations (single-pair mode only)")
     parser.add_argument("--top-k", type=int, default=5,
                          help="how many top relations to show in the risk summary (default 5)")
     args = parser.parse_args()
@@ -190,9 +219,30 @@ def main():
         num_layers=args.num_layers,
     )
 
+    def maybe_int(s):
+        return int(s) if s.isdigit() else s
+
+    if args.drugs:
+        drugs = [maybe_int(d.strip()) for d in args.drugs.split(",") if d.strip()]
+        if len(drugs) < 2:
+            parser.error("--drugs needs at least 2 comma-separated entries")
+
+        results = predictor.predict_multi(drugs, top_k=args.top_k)
+        print(f"Scoring {len(drugs)} drugs across {len(results)} pairs:")
+        best = max(results, key=lambda r: r["max_prob"])
+        for r in results:
+            flag = "  <-- highest max_prob" if r is best else ""
+            print(f"  ({r['drug_a']}, {r['drug_b']}): max={r['max_prob']:.4f}  mean={r['mean_prob']:.4f}{flag}")
+            for relation, prob in r["top_relations"]:
+                print(f"      {relation}: {prob:.4f}")
+        return
+
+    if not args.drug_a or not args.drug_b:
+        parser.error("either --drugs, or both --drug-a and --drug-b, are required")
+
     # allow raw integer node indices too, for debugging
-    drug_a = int(args.drug_a) if args.drug_a.isdigit() else args.drug_a
-    drug_b = int(args.drug_b) if args.drug_b.isdigit() else args.drug_b
+    drug_a = maybe_int(args.drug_a)
+    drug_b = maybe_int(args.drug_b)
 
     if args.edge_type is not None:
         prob = predictor.predict_pair(drug_a, drug_b, edge_type=args.edge_type)
